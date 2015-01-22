@@ -10,10 +10,9 @@ double relaxation_fac(int ,int);
 int main(void) {
  
   //Initialize and define grid size
-  const int Nx = 7;
-  const int Ny = 7;
+  const int Nx = 4;
+  const int Ny = 4;
 
-  /*
   //Find the relaxation factor and check if it is between 0 and 2
   double omega = relaxation_fac(Nx,Ny);
 
@@ -25,7 +24,6 @@ int main(void) {
     cout << "ERROR: the relaxation factor is greater than 2. Terminating..." << endl;
     exit (8);
   }
-  */
 
   //Define an array to store the values of potential
   double V[Nx][Ny] = {0};
@@ -45,30 +43,27 @@ int main(void) {
       V[i][j] = (1/4.0)*(V[i-1][j] + V[i+1][j] + V[i][j-1] + V[i][j+1]);
     }
   }
-
-  double temp;
-  double R[Nx-1][Ny-1] = {0};
-  int max_iterate = 0;
-  double err_bound = pow(10, -6);
-  for (int k=0; k <= max_iterate; k++) {
+  /*
+  int max_iterate = 2;
+  for (int k=1; k<=max_iterate; k++) {
+    // Loop to find an array of residuals R(i,j)
+    double R[Nx-2][Ny-2] = { 0 };
     for (int j=1; j<(Ny-1); j++) {
       for (int i=1; i<(Nx-1); i++) {
-	R[i][j] = V[i-1][j] + V[i+1][j] + V[i][j-1] + V[i][j+1] - 4*V[i][j];
-	if (R[i][j] < err_bound)
-	  break;
-	//else if ((R[i][j] > err_bound) && (k == max_iterate)){
-	//  cout << "Not enough iterations to achieve the required precision" << endl;
-	//  exit(8);
-	//}
+	R[i-1][j-1] = V[i-1][j] + V[i+1][j] + V[i][j-1] + V[i][j+1] - 4*V[i][j];
+      }
+    }
+    
+    for (int j=1; j<(Ny-1); j++) {
+      for (int i=1; i<(Nx-1); i++) {
+	V[i][j] = V[i][j] + omega * R[i-1][j-1];
       }
     }
   }
-
-
-  
-  for (int j=0; j<Ny-1; j++) {
-    for (int i=Nx-1; i>=0; i++) {
-      cout << setw(15) << R[i][j];
+  */
+  for (int j=Ny-1; j>=0; j--) {
+    for (int i=0; i<Nx; i++) {
+      cout << setw(15) << V[i][j];
     }
     cout << endl;
   }
