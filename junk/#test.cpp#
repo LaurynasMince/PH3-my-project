@@ -1,0 +1,15 @@
+#include <iostream>
+#include <fstream>
+
+using namespace std;
+
+int main(void) {
+
+  const int grid_rows = 100;
+  const int grid_cols = 100;
+
+  
+  return 0;
+}
+
+void my_function(float array[grid_rows][grid_cols], float potential)
