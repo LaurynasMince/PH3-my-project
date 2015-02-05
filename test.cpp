@@ -43,8 +43,8 @@ using namespace std;
 
 int main(void) {
   
-  const int grid_cols = 10;
-  const int grid_rows = 10;
+  const int grid_cols = 100;
+  const int grid_rows = 100;
   const int grid_spacing = 1;
 
   float v[grid_rows * grid_cols] = {0};
@@ -75,7 +75,8 @@ int main(void) {
 
   // HERE I AM USING A SIMPLE SOR METHOD WITHOUT RELAXATION -- SEEMS TO PRODUCE MORE SENSIBLE RESULTS WITHOUT LARGE DIVERGENCES. IT IS VERY POSSIBLE THAT THIS WAY TAKES MORE ITERATIONS TO ARRIVE AT A GOOD APPROXIMATION, BUT IF THAT IS THE COST OF GETTING MORE ACCURATE SOLUTION, WHEN WHY NOT???
   // !!!!!!!!!!!!!!! NOTE TO MYSELF: INVESTIGATE THE EFFECTS OF DIFFERENT RELAXATION FACTORS!!!!!!!!!!
-  int max_iterate = 1000;
+  int max_iterate = 100000;
+  float err_bound = pow(10, -6);
   for (int k=1; k <= max_iterate; k++) {
     for (int row=0; row < grid_rows; row++) {
       for (int col=1; col < grid_cols-1; col++) {
@@ -92,17 +93,57 @@ int main(void) {
     // Comparing the previous and new arrays to find the largest error (difference between the two corresonding elements in two arrays)
     
     float old_element, new_element, difference, relative_err;
-    float max_err;
+    float test_max, x, y;
     for (int row=0; row < grid_rows; row++) {
-      for (int col=1; col < grid_cols-1; col++) {
+      for (int col=0; col < grid_cols; col++) {
 	old_element = v[row * grid_rows + col];
 	new_element = new_v[row * grid_rows + col];
 	
 	difference = abs(old_element - new_element);
-	cout << difference << " " << row << " " << col << endl;
+	//	cout << difference << " " << row << " " << col << endl;
+	if (col == 0 && row == 0) {
+	  test_max = difference;
+	  x = col;
+	  y = row;
+	}
+	else {
+	  if (difference > test_max) {
+	    test_max = difference;
+	    x = col;
+	    y = row;
+	  }
+	}
       }
     }
+    if (test_max <= err_bound) {
+      cout << "Accuracy achieved in the " << k << " iteration." << endl;
+      cout << test_max << endl;
 
+      /**********************************************************/
+      // Printing out the array to see if the code works
+      /*
+      for (int nrow=0; nrow < grid_rows; nrow++) {
+	for (int ncol=0; ncol < grid_cols; ncol++) {
+	  cout << new_v[nrow * grid_cols + ncol] << " ";
+	}
+	cout << endl;
+      }
+      
+      cout << endl;
+      
+      for (int nrow=0; nrow < grid_rows; nrow++) {
+	for (int ncol=0; ncol < grid_cols; ncol++) {
+	  cout << new_v[nrow * grid_cols + ncol] << " ";
+	}
+	cout << endl;
+      }
+      */
+      /************************************************************/
+      break;
+    }
+  
+    
+  /*   
     if (k==max_iterate) {
       
       // Printing out the array to see if the code works
@@ -122,7 +163,7 @@ int main(void) {
 	cout << endl;
       }
     } 
-    
+  */  
 
     // Renew values in the array v by equating it to the new_v array so that the following iterations would find the difference between the elements of the adjecent matrices -- hopefully this will show a reduction in residual
     for (int row=0; row < grid_rows; row++) {
@@ -131,6 +172,16 @@ int main(void) {
       }
     }   
   }
+
+  ofstream output ("potential.dat");
+  for (int row=0; row < grid_rows; row++) {
+    for (int col=0; col < grid_cols; col++) {
+      output << new_v[row * grid_cols + col] << " ";
+    }
+    output << endl;
+  }
+
+  output.close();
 
   return 0;
 }
