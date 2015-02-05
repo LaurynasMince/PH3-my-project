@@ -23,7 +23,7 @@ int main(void) {
 
   /*****************************************************************
    * Solution to the problem using the Finite Differece Method     *
-   * without relaxation factor                                     *
+   *                                                               *
    *****************************************************************/
 
   // First, iterate through v to find initial solution to the problem, then keep iterating to correct the previous value until the required accuracy is achieved
@@ -35,15 +35,11 @@ int main(void) {
   float distance_sqrd, r_sqrd = r*r;
   /********************************************************/
 
-  for (int row=0; row < grid_rows; row++) {
-    for (int col=0; col < grid_cols; col++) {
+  for (int row=1; row < (grid_rows-1); row++) {
+    for (int col=1; col < (grid_cols-1); col++) {
       distance_sqrd = (col - a)*(col - a) + (row - b)*(row - b);
       if (distance_sqrd <= r_sqrd)
 	v[row * grid_cols + col] = 0;
-      else if (row == 0) // assuming v[(row-1)*grid_cols + col] is 0
-	v[row * grid_cols + col] = (1/4.0)*(v[(row+1) * grid_cols + col] + v[row * grid_cols + (col-1)] + v[row * grid_cols + (col+1)]);
-      else if (row == (grid_rows - 1)) // similar to the above
-	v[row * grid_cols + col] = (1/4.0)*(v[(row-1) * grid_cols + col] + v[row * grid_cols + (col-1)] + v[row * grid_cols + (col+1)]);
       else // general case
 	v[row * grid_cols + col] = (1/4.0)*(v[(row-1) * grid_cols + col] + v[(row+1) * grid_cols + col] + v[row * grid_cols + (col-1)] + v[row * grid_cols + (col+1)]);
     }
@@ -52,7 +48,7 @@ int main(void) {
   // Further iteration to increase accuracy
   int max_iterate = 100000;
   float err_bound = pow(10, -3);
-  float relaxation = 1.5f;
+  float relax = 1.9f;
   for (int k=1; k <= max_iterate; k++) {
     if (k%1000==0)
       cout << "Currently on the " << k << "th iteration" << endl;
@@ -61,12 +57,12 @@ int main(void) {
 	distance_sqrd = (col - a)*(col - a) + (row - b)*(row - b);
 	if (distance_sqrd <= r_sqrd)
 	  new_v[row * grid_cols + col] = 0;
-	else if (row == 0) // assuming v[(row-1)*grid_cols + col] is 0
-	  new_v[row * grid_cols + col] = (1-relaxation) + relaxation*(1/4.0)*(v[(row+1) * grid_cols + col] + new_v[row * grid_cols + (col-1)] + v[row * grid_cols + (col+1)]);
+	else if (row == 0)
+	  new_v[col] = v[grid_cols + col];
 	else if (row == (grid_rows - 1)) // similar to the above
-	  new_v[row * grid_cols + col] = (1-relaxation)*v[row*grid_cols + col] + relaxation*(1/4.0)*(new_v[(row-1) * grid_cols + col] + new_v[row * grid_cols + (col-1)] + v[row * grid_cols + (col+1)]);
+	  new_v[row * grid_cols + col] = v[(row-1) * grid_cols + col];
 	else // general case
-	  new_v[row * grid_cols + col] = (1-relaxation)*v[row*grid_cols + col] + relaxation*(1/4.0)*(new_v[(row-1) * grid_cols + col] + v[(row+1) * grid_cols + col] + new_v[row * grid_cols + (col-1)] + v[row * grid_cols + (col+1)]);
+	  new_v[row * grid_cols + col] = (1 - relax) * v[row*grid_cols + col] + (relax/4.0) * (v[row * grid_cols + (col+1)] + new_v[row * grid_cols + (col-1)] + v[(row+1) * grid_cols + col] + new_v[(row-1) * grid_cols + col]);
       }
     }
     
@@ -81,9 +77,10 @@ int main(void) {
       cout << "Not enough iterations to achieve the required accuracy." << endl;
       cout << err << endl;
     }
-    
-    // Renew the values of the array v by equating it to the array new_v
-    equate_matrix(v, new_v, grid_rows, grid_cols);
+    else {
+      // Renew the values of the array v by equating it to the array new_v
+      equate_matrix(v, new_v, grid_rows, grid_cols);
+    }
     
     // The end of the solution
   }
