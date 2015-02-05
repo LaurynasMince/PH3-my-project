@@ -41,6 +41,9 @@
 
 using namespace std;
 
+float error_check(float old_v[], float new_v[], int grid_rows, int grid_cols);
+void equate_matrix(float old_v[], float new_v[], int grid_rows, int grid_cols);
+
 int main(void) {
   
   const int grid_cols = 100;
@@ -62,126 +65,83 @@ int main(void) {
   }
 
   // Solution of the problem using the Finite Difference Method
-  for (int row=0; row < grid_rows; row++) {
-    for (int col=1; col < grid_cols-1; col++) {
-      if (row == 0) // assuming v[(row-1)*grid_cols + col] is 0
-	v[row * grid_cols + col] = (1/4.0)*(v[(row+1) * grid_cols + col] + v[row * grid_cols + (col-1)] + v[row * grid_cols + (col+1)]);
-      else if (row == (grid_rows - 1))
-	v[row * grid_cols + col] = (1/4.0)*(v[(row-1) * grid_cols + col] + v[row * grid_cols + (col-1)] + v[row * grid_cols + (col+1)]);
-      else
-	v[row * grid_cols + col] = (1/4.0)*(v[(row-1) * grid_cols + col] + v[(row+1) * grid_cols + col] + v[row * grid_cols + (col-1)] + v[row * grid_cols + (col+1)]);
+
+  /**********************************************************************
+   * THE FIRST ITERATION OF THE SOLUTION THAT IS GOING TO BE IMPROVED   *
+   **********************************************************************/
+  for (int row=1; row<(grid_rows-1); row++) {
+    for (int col=1; col < (grid_cols-1); col++) {
+      v[row * grid_cols + col] = (1/4.0)*(v[row * grid_cols + (col-1)] + v[row * grid_cols + (col+1)] + v[(row-1) * grid_cols + col] + v[(row+1) * grid_cols + col]);
     }
   }
-
-  // HERE I AM USING A SIMPLE SOR METHOD WITHOUT RELAXATION -- SEEMS TO PRODUCE MORE SENSIBLE RESULTS WITHOUT LARGE DIVERGENCES. IT IS VERY POSSIBLE THAT THIS WAY TAKES MORE ITERATIONS TO ARRIVE AT A GOOD APPROXIMATION, BUT IF THAT IS THE COST OF GETTING MORE ACCURATE SOLUTION, WHEN WHY NOT???
-  // !!!!!!!!!!!!!!! NOTE TO MYSELF: INVESTIGATE THE EFFECTS OF DIFFERENT RELAXATION FACTORS!!!!!!!!!!
-  int max_iterate = 100000;
-  float err_bound = pow(10, -6);
-  for (int k=1; k <= max_iterate; k++) {
-    for (int row=0; row < grid_rows; row++) {
-      for (int col=1; col < grid_cols-1; col++) {
-	if (row == 0) // assuming v[(row-1)*grid_cols + col] is 0
-	  new_v[row * grid_cols + col] = (1/4.0)*(v[(row+1) * grid_cols + col] + v[row * grid_cols + (col-1)] + v[row * grid_cols + (col+1)]);
-	else if (row == (grid_rows - 1))
-	  new_v[row * grid_cols + col] = (1/4.0)*(v[(row-1) * grid_cols + col] + v[row * grid_cols + (col-1)] + v[row * grid_cols + (col+1)]);
-	else
-	  new_v[row * grid_cols + col] = (1/4.0)*(v[(row-1) * grid_cols + col] + v[(row+1) * grid_cols + col] + v[row * grid_cols + (col-1)] + v[row * grid_cols + (col+1)]);
-      }
+  
+  float relax = 1.9;
+  float err_tol = pow(10, -3);
+  int max_iterate = 10000;
+  for (int k=1; k<max_iterate; k++) {
+    if (k%100==0) {
+      cout << "Currently in the " << k << "th iteration." << endl;
     }
-
-
-    // Comparing the previous and new arrays to find the largest error (difference between the two corresonding elements in two arrays)
     
-    float old_element, new_element, difference, relative_err;
-    float test_max, x, y;
     for (int row=0; row < grid_rows; row++) {
-      for (int col=0; col < grid_cols; col++) {
-	old_element = v[row * grid_rows + col];
-	new_element = new_v[row * grid_rows + col];
-	
-	difference = abs(old_element - new_element);
-	//	cout << difference << " " << row << " " << col << endl;
-	if (col == 0 && row == 0) {
-	  test_max = difference;
-	  x = col;
-	  y = row;
+      for (int col=1; col < (grid_cols-1); col++) {
+	if (row==0) {
+	  new_v[col] = v[grid_cols + col];
+	}
+	else if (row == (grid_rows-1)) {
+	  new_v[row*grid_cols + col] = v[(row-1)*grid_cols + col];
 	}
 	else {
-	  if (difference > test_max) {
-	    test_max = difference;
-	    x = col;
-	    y = row;
-	  }
+	  new_v[row * grid_cols + col] = (1 - relax) * v[row*grid_cols + col] + (relax/4.0) * (v[row * grid_cols + (col+1)] + new_v[row * grid_cols + (col-1)] + v[(row+1) * grid_cols + col] + new_v[(row-1) * grid_cols + col]);
 	}
       }
     }
-    if (test_max <= err_bound) {
-      cout << "Accuracy achieved in the " << k << " iteration." << endl;
-      cout << test_max << endl;
 
-      /**********************************************************/
-      // Printing out the array to see if the code works
-      /*
-      for (int nrow=0; nrow < grid_rows; nrow++) {
-	for (int ncol=0; ncol < grid_cols; ncol++) {
-	  cout << new_v[nrow * grid_cols + ncol] << " ";
-	}
-	cout << endl;
-      }
-      
-      cout << endl;
-      
-      for (int nrow=0; nrow < grid_rows; nrow++) {
-	for (int ncol=0; ncol < grid_cols; ncol++) {
-	  cout << new_v[nrow * grid_cols + ncol] << " ";
-	}
-	cout << endl;
-      }
-      */
-      /************************************************************/
+    float err = error_check(v, new_v, grid_rows, grid_cols);
+    if (err <= err_tol) {
+      cout << "The accuracy achieved in the " << k << "th iteration" << endl;
       break;
     }
-  
-    
-  /*   
-    if (k==max_iterate) {
-      
-      // Printing out the array to see if the code works
-      for (int row=0; row < grid_rows; row++) {
-	for (int col=0; col < grid_cols; col++) {
-	  cout << new_v[row * grid_cols + col] << " ";
-	}
-	cout << endl;
-      }
-      
-      cout << endl;
-      
-      for (int row=0; row < grid_rows; row++) {
-	for (int col=0; col < grid_cols; col++) {
-	  cout << new_v[row * grid_cols + col] << " ";
-	}
-	cout << endl;
-      }
-    } 
-  */  
-
-    // Renew values in the array v by equating it to the new_v array so that the following iterations would find the difference between the elements of the adjecent matrices -- hopefully this will show a reduction in residual
-    for (int row=0; row < grid_rows; row++) {
-      for (int col=0; col < grid_cols; col++) {
-	v[row * grid_cols + col] = new_v[row * grid_cols + col];
-      }
-    }   
+    else {
+      cout << err << endl;
+      equate_matrix(v, new_v, grid_rows, grid_cols);
+    }
   }
 
   ofstream output ("potential.dat");
   for (int row=0; row < grid_rows; row++) {
     for (int col=0; col < grid_cols; col++) {
-      output << new_v[row * grid_cols + col] << " ";
+      output << new_v[row*grid_cols + col] << " ";
     }
     output << endl;
   }
 
   output.close();
 
+
   return 0;
+}
+
+float error_check(float old_v[], float new_v[], int grid_rows, int grid_cols) {
+  
+  float test_max=0, difference, relative_err;
+  for (int row=0; row < grid_rows; row++) {
+    for(int col=1; col < (grid_cols-1); col++) {
+      difference = fabs(old_v[row * grid_cols + col] - new_v[row * grid_cols + col]);
+	if (difference > test_max) {
+	  test_max = difference;
+	}
+    }
+  }
+  
+  return test_max;
+}
+
+void equate_matrix(float old_v[], float new_v[], int grid_rows, int grid_cols) {
+  
+  for (int row=0; row<grid_rows; row++) {
+    for (int col=0; col<grid_cols; col++) {
+      old_v[row * grid_cols + col] = new_v[row * grid_cols + col];
+    }
+  }
 }

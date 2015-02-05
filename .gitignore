@@ -23,3 +23,5 @@
 *.app
 # Backups
 *.*~
+*.dat
+*.eps
